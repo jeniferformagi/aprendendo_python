@@ -1,0 +1,53 @@
+# Versão da imagem oficial do Python rodada quando for instanciada pelo docker-compose.
+version: "3.9"
+
+services:
+  db:
+    image: postgres:14.1-alpine
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      TZ: 
+    ports:
+      - '5432:5432'
+    volumes: 
+      - db:/var/lib/postgresql/data
+      - ./script.sql:/docker-entrypoint-initdb.d/script.sql
+    networks:
+      conection:
+        ipv4_address: 172.28.1.4
+  project:
+    build:
+      context: .
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+    networks:
+      - conection
+    links:
+      - db
+    tty: true
+  pgadmin:
+    image: dpage/pgadmin4
+    environment: 
+      PGADMIN_DEFAULT_EMAIL: "useradmin@gmail.com"
+      PGADMIN_DEFAULT_PASSWORD: "admin"
+    ports:
+      - "80:80"
+    depends_on:
+      - db
+    networks:
+      - conection
+
+volumes:
+  db:
+    driver: local
+
+networks:
+  conection:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.0.0/16
